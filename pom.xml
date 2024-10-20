@@ -5,7 +5,7 @@
 	<groupId>com.github.hiwepy</groupId>
 	<artifactId>pac4j-biz</artifactId>
 	<description>Pac4j For Biz </description>
-	<version>6.0.x.20241003-SNAPSHOT</version>
+	<version>6.0.x.20241003.RELEASE</version>
 	<name>${project.groupId}:${project.artifactId}</name>
    	<url>https://github.com/hiwepy/${project.artifactId}</url>
 	<packaging>jar</packaging>
