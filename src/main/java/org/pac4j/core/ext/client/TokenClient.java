@@ -41,21 +41,21 @@ public abstract class TokenClient<P extends TokenProfile, T extends Token> exten
 
 	public TokenClient(final String parameterName, final TokenAuthenticator<P, T> tokenAuthenticator) {
 		this.parameterName = parameterName;
-        defaultAuthenticator(tokenAuthenticator);
+		this.setAuthenticator(tokenAuthenticator);
 	}
 
     public TokenClient(final String parameterName,
                            final TokenAuthenticator<P, T> tokenAuthenticator,
                            final ProfileCreator profileCreator) {
         this.parameterName = parameterName;
-        defaultAuthenticator(tokenAuthenticator);
-        defaultProfileCreator(profileCreator);
+		this.setAuthenticator(tokenAuthenticator);
+		this.setProfileCreator(profileCreator);
     }
 	
 	@Override
 	protected void internalInit(final boolean forceReinit) {
-		defaultProfileCreator(new TokenProfileCreator());
-		defaultCredentialsExtractor(new TokenParameterExtractor(this.getParameterName(), this.isSupportGetRequest(), this.isSupportPostRequest()));
+		this.setProfileCreator(new TokenProfileCreator());
+		this.setCredentialsExtractor(new TokenParameterExtractor(this.getParameterName(), this.isSupportGetRequest(), this.isSupportPostRequest()));
 		
 		// ensures components have been properly initialized
         CommonHelper.assertNotNull("credentialsExtractor", getCredentialsExtractor());

@@ -15,15 +15,8 @@
  */
 package org.pac4j.core.ext.credentials.authenticator;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.pac4j.core.context.CallContext;
 import org.pac4j.core.context.HttpConstants;
 import org.pac4j.core.context.WebContext;
 import org.pac4j.core.context.session.SessionStore;
@@ -43,7 +36,14 @@ import org.pac4j.core.util.HttpUtils2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson.JSONObject;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 public abstract class TokenAuthenticator<P extends TokenProfile, T extends Token>
 	extends TokenProfileDefinitionAware<P, T>  implements Authenticator {
@@ -51,7 +51,8 @@ public abstract class TokenAuthenticator<P extends TokenProfile, T extends Token
 	protected final Logger logger = LoggerFactory.getLogger(getClass());
 	protected final String DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:70.0) Gecko/20100101 Firefox/70.0";
 	protected final String DEFAULT_ACCEPT_HEADER = "application/json, text/plain, */*";
-	
+	protected final ObjectMapper objectMapper = new ObjectMapper();
+
 	/* Map containing user defined headers */
 	private Map<String, String> customHeaders = new HashMap<>();
     /* Map containing user defined parameters */
@@ -76,9 +77,9 @@ public abstract class TokenAuthenticator<P extends TokenProfile, T extends Token
 		CommonHelper.assertNotNull("parameterName", parameterName);
 		CommonHelper.assertNotNull("profileDefinition", getProfileDefinition());
     }
-	
+
 	@Override
-    public void validate(Credentials credentials, WebContext context, SessionStore sessionStore) {
+	public Optional<Credentials> validate(CallContext ctx, Credentials credentials) {
         
     	if (credentials == null) {
             throw new CredentialsException("No credential");
@@ -90,11 +91,12 @@ public abstract class TokenAuthenticator<P extends TokenProfile, T extends Token
             throw new CredentialsException("Token cannot be blank");
         }
         
-        final Optional<P> profile = retrieveUserProfileFromToken(context , tokenCredentials);
+        final Optional<P> profile = retrieveUserProfileFromToken(ctx , tokenCredentials);
         
         logger.debug("profile: {}", profile.get());
         credentials.setUserProfile(profile.get());
-        
+
+		return Optional.ofNullable(credentials);
     }
 	
 	/**
@@ -108,11 +110,11 @@ public abstract class TokenAuthenticator<P extends TokenProfile, T extends Token
     /**
      * Retrieve the user profile from the access token.
      *
-     * @param context the web context
+     * @param ctx the call context
      * @param credentials the credentials
      * @return the user profile
      */
-    protected Optional<P> retrieveUserProfileFromToken(final WebContext context, final TokenCredentials credentials) {
+    protected Optional<P> retrieveUserProfileFromToken(final CallContext ctx, final TokenCredentials credentials) {
     	
     	final T accessToken = getAccessToken(credentials);
     	
@@ -121,9 +123,9 @@ public abstract class TokenAuthenticator<P extends TokenProfile, T extends Token
     	TokenProfileDefinition<P, T> profileDefinition = getProfileDefinition();
 		CommonHelper.assertNotNull("profileDefinition", profileDefinition);
 			
-		final String profileUrl = profileDefinition.getProfileUrl(context, accessToken);
+		final String profileUrl = profileDefinition.getProfileUrl(ctx.webContext(), accessToken);
 		
-        final String body = retrieveUserProfileFromRestApi(context, accessToken, profileUrl);
+        final String body = retrieveUserProfileFromRestApi(ctx.webContext(), accessToken, profileUrl);
         logger.debug("body: {}", body);
         if (body == null) {
             throw new HttpCommunicationException("No data found for accessToken: " + accessToken);
@@ -151,10 +153,10 @@ public abstract class TokenAuthenticator<P extends TokenProfile, T extends Token
         try {
         	
         	Map<String, String> finalHeaders = this.finalHeaders(context, accessToken, profileUrl, getCustomHeaders());
-       	 	logger.debug("finalHeaders: {} ", JSONObject.toJSONString(finalHeaders));
+       	 	logger.debug("finalHeaders: {} ", objectMapper.writeValueAsString(finalHeaders));
         	
        	 	Map<String, String> finalParams = this.finalParams(context, accessToken, profileUrl, getCustomParams());
-            logger.debug("finalParams: {} ", JSONObject.toJSONString(finalParams));
+            logger.debug("finalParams: {} ", objectMapper.writeValueAsString(finalParams));
              
 			connection = HttpUtils2.openGetConnection(profileUrl, finalHeaders, finalParams);
             

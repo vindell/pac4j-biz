@@ -16,6 +16,7 @@
 package org.pac4j.core.ext.authentication;
 
 import org.apache.commons.lang3.StringUtils;
+import org.pac4j.core.context.CallContext;
 import org.pac4j.core.context.WebContext;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.credentials.Credentials;
@@ -30,6 +31,8 @@ import org.pac4j.core.ext.exception.OverRetryRemindException;
 import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.util.CommonHelper;
 import org.pac4j.core.util.Pac4jConstants;
+
+import java.util.Optional;
 
 /**
  * TODO
@@ -52,7 +55,7 @@ public class UsernamePasswordCaptchaAuthenticator implements Authenticator {
 	}
 
 	@Override
-    public void validate(Credentials credentials, WebContext context, SessionStore sessionStore){
+	public Optional<Credentials> validate(CallContext ctx, Credentials credentials) {
         
     	if (credentials == null) {
             throw new CredentialsException("No credential");
@@ -74,19 +77,19 @@ public class UsernamePasswordCaptchaAuthenticator implements Authenticator {
         }
         
     	// The retry limit has been exceeded and a reminder is required
-        if(isOverRetryRemind(context, sessionStore)) {
+        if(isOverRetryRemind(ctx.webContext(), ctx.sessionStore())) {
         	throw new OverRetryRemindException("The number of login errors exceeds the maximum retry limit and a verification code is required.");
         }
         
         // 验证码必填或者错误次数超出系统限制，则要求填入验证码
- 		if(isCaptchaRequired() || isOverRetryTimes(context, sessionStore)) {
+ 		if(isCaptchaRequired() || isOverRetryTimes(ctx.webContext(), ctx.sessionStore())) {
  			
  			if(StringUtils.isBlank(upcCredentials.getCaptcha())) {
 				throw new CaptchaNotFoundException("Captcha not provided");
 			}
  			
  	        // 进行验证	
-	        boolean validation = captchaResolver.validCaptcha(context, sessionStore, upcCredentials.getCaptcha());
+	        boolean validation = captchaResolver.validCaptcha(ctx.webContext(), ctx.sessionStore(), upcCredentials.getCaptcha());
 			if (!validation) {
 				throw new CaptchaIncorrectException("Captcha validation failed!");
 			}
@@ -99,6 +102,8 @@ public class UsernamePasswordCaptchaAuthenticator implements Authenticator {
         profile.addAttribute(Pac4jExtConstants.CAPTCHA, upcCredentials.getCaptcha());
         
         credentials.setUserProfile(profile);
+
+		return Optional.ofNullable(credentials);
     }
     
     public boolean isCaptchaRequired() {

@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
+import org.pac4j.core.context.CallContext;
 import org.pac4j.core.context.WebContext;
 import org.pac4j.core.context.WebContextHelper;
 import org.pac4j.core.context.session.SessionStore;
@@ -27,6 +28,7 @@ import org.pac4j.core.credentials.extractor.CredentialsExtractor;
 import org.pac4j.core.exception.CredentialsException;
 import org.pac4j.core.ext.Pac4jExtConstants;
 import org.pac4j.core.ext.credentials.SignatureCredentials;
+import org.pac4j.core.ext.utils.MyCommonHelper;
 import org.pac4j.core.util.CommonHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,10 +60,11 @@ public class SignatureParameterExtractor implements CredentialsExtractor {
         this.supportPostRequest = supportPostRequest;
         this.charset = charset;
 	}
-	
+
 	@Override
-    public Optional<Credentials> extract(WebContext context, SessionStore sessionStore) {
-		
+	public Optional<Credentials> extract(CallContext ctx) {
+
+		WebContext context = ctx.webContext();
 		logger.debug("supportGetRequest: {}", this.supportGetRequest);
 		logger.debug("supportPostRequest: {}", this.supportPostRequest);
 		
@@ -86,7 +89,7 @@ public class SignatureParameterExtractor implements CredentialsExtractor {
 	
 	@Override
     public String toString() {
-        return CommonHelper.toNiceString(this.getClass(), "signatureParamName", signatureParamName,
+        return MyCommonHelper.toNiceString(this.getClass(), "signatureParamName", signatureParamName,
         		 "supportGetRequest", supportGetRequest, "supportPostRequest", supportPostRequest, "charset", charset);
     }
 	

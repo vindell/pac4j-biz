@@ -17,6 +17,7 @@ package org.pac4j.core.ext.profile.creator;
 
 import java.util.Optional;
 
+import org.pac4j.core.context.CallContext;
 import org.pac4j.core.context.WebContext;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.credentials.Credentials;
@@ -32,7 +33,7 @@ public class SignatureProfileCreator implements ProfileCreator {
 	public final static SignatureProfileCreator INSTANCE = new SignatureProfileCreator();
 
     @Override
-    public Optional<UserProfile> create(Credentials credentials, WebContext context, SessionStore sessionStore) {
+    public Optional<UserProfile> create(CallContext ctx, Credentials credentials) {
         return Optional.ofNullable(credentials.getUserProfile());
     }
 }

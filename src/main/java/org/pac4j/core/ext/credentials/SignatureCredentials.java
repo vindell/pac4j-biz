@@ -16,6 +16,7 @@
 package org.pac4j.core.ext.credentials;
 
 import org.pac4j.core.credentials.Credentials;
+import org.pac4j.core.ext.utils.MyCommonHelper;
 import org.pac4j.core.util.CommonHelper;
 
 /**
@@ -43,8 +44,12 @@ public class SignatureCredentials extends Credentials {
 
 	@Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         final SignatureCredentials that = (SignatureCredentials) o;
 
@@ -58,7 +63,7 @@ public class SignatureCredentials extends Credentials {
 
     @Override
     public String toString() {
-        return CommonHelper.toNiceString(this.getClass(), "payload", this.payload, "signature", this.signature);
+        return MyCommonHelper.toNiceString(this.getClass(), "payload", this.payload, "signature", this.signature);
     }
     
 }

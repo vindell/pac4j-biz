@@ -15,12 +15,10 @@
  */
 package org.pac4j.core.ext.authentication;
 
-import java.util.Optional;
-
 import org.pac4j.core.client.IndirectClient;
+import org.pac4j.core.context.CallContext;
 import org.pac4j.core.context.HttpConstants;
 import org.pac4j.core.context.WebContext;
-import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.credentials.Credentials;
 import org.pac4j.core.credentials.authenticator.Authenticator;
 import org.pac4j.core.exception.CredentialsException;
@@ -29,9 +27,12 @@ import org.pac4j.core.exception.http.HttpAction;
 import org.pac4j.core.exception.http.StatusAction;
 import org.pac4j.core.ext.Pac4jExtConstants;
 import org.pac4j.core.ext.credentials.extractor.UsernamePasswordCaptchaCredentialsExtractor;
+import org.pac4j.core.ext.utils.MyCommonHelper;
 import org.pac4j.core.profile.creator.ProfileCreator;
 import org.pac4j.core.util.CommonHelper;
 import org.pac4j.core.util.Pac4jConstants;
+
+import java.util.Optional;
 
 /**
  * TODO
@@ -59,7 +60,8 @@ public class UsernamePasswordCaptchaFormClient extends IndirectClient {
 
     public UsernamePasswordCaptchaFormClient(final String loginUrl, final Authenticator usernamePasswordAuthenticator) {
         this.loginUrl = loginUrl;
-        defaultAuthenticator(usernamePasswordAuthenticator);
+
+        this.setAuthenticator(usernamePasswordAuthenticator);
     }
 
 	public UsernamePasswordCaptchaFormClient(final String loginUrl, final String usernameParameter,
@@ -70,14 +72,14 @@ public class UsernamePasswordCaptchaFormClient extends IndirectClient {
         this.passwordParameter = passwordParameter;
         this.captchaParameter = captchaParameter;
         this.postOnly = postOnly;
-        defaultAuthenticator(usernamePasswordAuthenticator);
+        this.setAuthenticator(usernamePasswordAuthenticator);
     }
 
     public UsernamePasswordCaptchaFormClient(final String loginUrl, final Authenticator usernamePasswordAuthenticator,
                       final ProfileCreator profileCreator) {
         this.loginUrl = loginUrl;
-        defaultAuthenticator(usernamePasswordAuthenticator);
-        defaultProfileCreator(profileCreator);
+        this.setAuthenticator(usernamePasswordAuthenticator);
+        this.setProfileCreator(profileCreator);
     }
 
     @Override
@@ -86,43 +88,44 @@ public class UsernamePasswordCaptchaFormClient extends IndirectClient {
         CommonHelper.assertNotBlank("usernameParameter", this.usernameParameter);
         CommonHelper.assertNotBlank("passwordParameter", this.passwordParameter);
         CommonHelper.assertNotBlank("captchaParameter", this.captchaParameter);
-        
-        defaultRedirectionActionBuilder((context, sessionStore) -> {
-            final String finalLoginUrl = getUrlResolver().compute(this.loginUrl, context);
+
+        this.setRedirectionActionBuilderIfUndefined((ctx) -> {
+            final String finalLoginUrl = getUrlResolver().compute(this.loginUrl, ctx.webContext());
             //return RedirectionAction.redirect(finalLoginUrl);
             return null;
         });
-        
-        defaultCredentialsExtractor(new UsernamePasswordCaptchaCredentialsExtractor(usernameParameter, passwordParameter, captchaParameter, postOnly));
+
+        this.setCredentialsExtractor(new UsernamePasswordCaptchaCredentialsExtractor(usernameParameter, passwordParameter, captchaParameter, postOnly));
     }
 
     @Override
-    protected Optional<Credentials> retrieveCredentials(final WebContext context, SessionStore sessionStore) {
+    public Optional<Credentials> getCredentials(final CallContext ctx) {
         CommonHelper.assertNotNull("credentialsExtractor", getCredentialsExtractor());
         CommonHelper.assertNotNull("authenticator", getAuthenticator());
 
-        final Optional<String> username = context.getRequestParameter(this.usernameParameter);
+        WebContext context = ctx.webContext();
+        Optional<String> username = context.getRequestParameter(this.usernameParameter);
         Optional<Credentials> credentials;
         try {
             // retrieve credentials
-            credentials = getCredentialsExtractor().extract(context, sessionStore);
+            credentials = getCredentialsExtractor().extract(ctx);
             logger.debug("usernamePasswordCredentials: {}", credentials);
             if (credentials == null) {
-                throw handleInvalidCredentials(context, sessionStore, username, "Username and password cannot be blank -> return to the form with error",
+                throw handleInvalidCredentials(ctx, username, "Username and password cannot be blank -> return to the form with error",
                     MISSING_FIELD_ERROR);
             }
             // validate credentials
-            getAuthenticator().validate(credentials.get(), context, sessionStore);
+            getAuthenticator().validate(ctx, credentials.get());
         } catch (final CredentialsException e) {
-            throw handleInvalidCredentials(context, sessionStore, username, "Credentials validation fails -> return to the form with error",
+            throw handleInvalidCredentials(ctx, username, "Credentials validation fails -> return to the form with error",
                 computeErrorMessage(e));
         }
         return credentials;
     }
 
-    protected HttpAction handleInvalidCredentials(final WebContext context, SessionStore sessionStore, final Optional<String> username, String message, String errorMessage) {
+    protected HttpAction handleInvalidCredentials(final CallContext ctx, final Optional<String> username, String message, String errorMessage) {
         // it's an AJAX request -> unauthorized (instead of a redirection)
-        if (getAjaxRequestResolver().isAjax(context, sessionStore)) {
+        if (getAjaxRequestResolver().isAjax(ctx)) {
             logger.info("AJAX request detected -> returning 401");
             return new StatusAction(HttpConstants.UNAUTHORIZED);
         } else {
@@ -185,7 +188,7 @@ public class UsernamePasswordCaptchaFormClient extends IndirectClient {
 
 	@Override
     public String toString() {
-        return CommonHelper.toNiceString(this.getClass(), "callbackUrl", this.callbackUrl, "name", getName(), "loginUrl",
+        return MyCommonHelper.toNiceString(this.getClass(), "callbackUrl", this.callbackUrl, "name", getName(), "loginUrl",
                 this.loginUrl, "usernameParameter", this.usernameParameter, "passwordParameter", this.passwordParameter,
                 "redirectActionBuilder", getRedirectionActionBuilder(), "extractor", getCredentialsExtractor(),
                 "authenticator", getAuthenticator(), "profileCreator", getProfileCreator());

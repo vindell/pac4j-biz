@@ -18,6 +18,7 @@ package org.pac4j.core.ext.authentication.generator;
 import java.util.Optional;
 
 import org.pac4j.core.authorization.generator.AuthorizationGenerator;
+import org.pac4j.core.context.CallContext;
 import org.pac4j.core.context.WebContext;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.ext.authentication.userdetails.UserDetailsService;
@@ -36,11 +37,11 @@ public class UserDetailsAuthorizationGenerator<U extends CommonProfile> implemen
 		super();
 		this.detailsService = detailsService;
 	}
-	
+
 	@Override
-    public Optional<UserProfile> generate(WebContext context, SessionStore sessionStore, UserProfile profile) {
-		UserDetails details = getDetailsService().loadUserDetails(context, profile);
-        profile.addPermissions(details.getPermissions());
+	public Optional<UserProfile> generate(CallContext ctx, UserProfile profile) {
+		UserDetails details = getDetailsService().loadUserDetails(ctx.webContext(), profile);
+        //profile.add(details.getPermissions());
         profile.addRoles(details.getRoles());
         return Optional.ofNullable(profile);
     }

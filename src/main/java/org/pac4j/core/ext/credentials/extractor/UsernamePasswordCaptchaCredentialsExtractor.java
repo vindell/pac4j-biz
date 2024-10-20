@@ -15,10 +15,9 @@
  */
 package org.pac4j.core.ext.credentials.extractor;
 
-import java.util.Optional;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.pac4j.core.context.CallContext;
 import org.pac4j.core.context.WebContext;
-import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.credentials.Credentials;
 import org.pac4j.core.credentials.extractor.CredentialsExtractor;
 import org.pac4j.core.ext.Pac4jExtConstants;
@@ -31,12 +30,13 @@ import org.pac4j.core.util.Pac4jConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson.JSONObject;
+import java.util.Optional;
 
 public class UsernamePasswordCaptchaCredentialsExtractor implements CredentialsExtractor {
 	
 	// =====================================================================================
 	private static Logger logger = LoggerFactory.getLogger(UsernamePasswordCaptchaCredentialsExtractor.class);
+	protected final ObjectMapper objectMapper = new ObjectMapper();
 
 	private String usernameParameter = Pac4jConstants.USERNAME;
 	private String passwordParameter = Pac4jConstants.PASSWORD;
@@ -52,8 +52,9 @@ public class UsernamePasswordCaptchaCredentialsExtractor implements CredentialsE
 	}
 
 	@Override
-    public Optional<Credentials> extract(WebContext context, SessionStore sessionStore) {
-    	
+	public Optional<Credentials> extract(CallContext ctx) {
+
+		WebContext context = ctx.webContext();
     	if (isPostOnly() && ! WebUtils.isPostRequest(context)) {
 			if (logger.isDebugEnabled()) {
 				logger.debug("Authentication method not supported. Request method: " + context.getRequestMethod());
@@ -64,7 +65,7 @@ public class UsernamePasswordCaptchaCredentialsExtractor implements CredentialsE
 		// Post && JSON
 		if(WebUtils.isPostRequest(context) && WebUtils.isContentTypeJson(context)) {
 			
-			AuthenticationRequest loginRequest = JSONObject.parseObject(context.getRequestContent(), AuthenticationRequest.class);
+			AuthenticationRequest loginRequest = objectMapper.convertValue(context.getRequestContent(), AuthenticationRequest.class);
 			
 			final String username = loginRequest.getUsername();
 	        final String password = loginRequest.getPassword();

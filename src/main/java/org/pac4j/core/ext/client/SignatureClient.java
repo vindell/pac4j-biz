@@ -15,8 +15,6 @@
  */
 package org.pac4j.core.ext.client;
 
-import java.nio.charset.StandardCharsets;
-
 import org.pac4j.core.client.DirectClient;
 import org.pac4j.core.ext.Pac4jExtConstants;
 import org.pac4j.core.ext.credentials.SignatureCredentials;
@@ -27,6 +25,8 @@ import org.pac4j.core.ext.profile.SignatureProfile;
 import org.pac4j.core.ext.profile.creator.SignatureProfileCreator;
 import org.pac4j.core.profile.creator.ProfileCreator;
 import org.pac4j.core.util.CommonHelper;
+
+import java.nio.charset.StandardCharsets;
 
 public abstract class SignatureClient<C extends SignatureCredentials, P extends SignatureProfile, T extends Signature>
 		extends DirectClient {
@@ -50,20 +50,20 @@ public abstract class SignatureClient<C extends SignatureCredentials, P extends 
 	public SignatureClient(final String signatureParamName,
 			final SignatureAuthenticator<C, P, T> tokenAuthenticator) {
 		this.signatureParamName = signatureParamName;
-		defaultAuthenticator(tokenAuthenticator);
+		this.setAuthenticator(tokenAuthenticator);
 	}
 
 	public SignatureClient(final String signatureParamName,
 			final SignatureAuthenticator<C, P, T> tokenAuthenticator, final ProfileCreator profileCreator) {
 		this.signatureParamName = signatureParamName;
-		defaultAuthenticator(tokenAuthenticator);
-		defaultProfileCreator(profileCreator);
+		this.setAuthenticator(tokenAuthenticator);
+		this.setProfileCreator(profileCreator);
 	}
 
 	@Override
 	protected void internalInit(final boolean forceReinit) {
-		defaultProfileCreator(new SignatureProfileCreator());
-		defaultCredentialsExtractor(new SignatureParameterExtractor(
+		this.setProfileCreator(new SignatureProfileCreator());
+		this.setCredentialsExtractor(new SignatureParameterExtractor(
 				this.getSignatureParamName(), this.isSupportGetRequest(),
 				this.isSupportPostRequest(), this.getCharset()));
 		// ensures components have been properly initialized

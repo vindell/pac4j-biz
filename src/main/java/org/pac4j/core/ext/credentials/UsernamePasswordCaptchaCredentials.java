@@ -18,6 +18,7 @@ package org.pac4j.core.ext.credentials;
 import org.pac4j.core.credentials.Credentials;
 import org.pac4j.core.credentials.UsernamePasswordCredentials;
 import org.pac4j.core.ext.Pac4jExtConstants;
+import org.pac4j.core.ext.utils.MyCommonHelper;
 import org.pac4j.core.util.CommonHelper;
 import org.pac4j.core.util.Pac4jConstants;
 
@@ -59,12 +60,18 @@ public class UsernamePasswordCaptchaCredentials extends Credentials {
 
 	@Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         final UsernamePasswordCredentials that = (UsernamePasswordCredentials) o;
 
-        if (username != null ? !username.equals(that.getUsername()) : that.getUsername() != null) return false;
+        if (username != null ? !username.equals(that.getUsername()) : that.getUsername() != null) {
+            return false;
+        }
         return !(password != null ? !password.equals(that.getPassword()) : that.getPassword() != null);
     }
     
@@ -78,7 +85,7 @@ public class UsernamePasswordCaptchaCredentials extends Credentials {
 
     @Override
     public String toString() {
-        return CommonHelper.toNiceString(this.getClass(), Pac4jConstants.USERNAME, this.username,
+        return MyCommonHelper.toNiceString(this.getClass(), Pac4jConstants.USERNAME, this.username,
                 Pac4jConstants.PASSWORD, "[PROTECTED]", Pac4jExtConstants.CAPTCHA, "[PROTECTED]");
     }
 }
