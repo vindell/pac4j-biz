@@ -5,7 +5,7 @@
 	<groupId>com.github.hiwepy</groupId>
 	<artifactId>pac4j-biz</artifactId>
 	<description>Pac4j For Biz </description>
-	<version>6.0.x.20241003.RELEASE</version>
+	<version>6.1.x.20241003.RELEASE</version>
 	<name>${project.groupId}:${project.artifactId}</name>
    	<url>https://github.com/hiwepy/${project.artifactId}</url>
 	<packaging>jar</packaging>
@@ -386,7 +386,7 @@
 		<maven-war-plugin.version>3.4.0</maven-war-plugin.version>
 		<!-- Dependency versions -->
 		<commons-lang3.version>3.17.0</commons-lang3.version>
-		<pac4j.version>6.0.6</pac4j.version>
+		<pac4j.version>6.1.0</pac4j.version>
 		<lombok.version>1.18.20</lombok.version>
 	</properties>
 
